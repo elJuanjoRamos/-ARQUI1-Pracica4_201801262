@@ -30,14 +30,18 @@ handlefile  dw ?
 
 textocorregido  db 5000 dup('$') ; 
 operaciones     dw ? ; 
-identificadores db 500 dup('$'),'$' ; 
-sizecadena      db 100 dup('$'),'$'
+resultados      db 1000 dup('$'),'$' ; 
+temporal        db 6 dup('$'),'$' ; 
 
 
 OP1         db 'add', '$'
 OP2         db 'sub', '$'
 OP3         db 'div', '$'
 OP4         db 'mul', '$'
+OP5         db 'ADD', '$'
+OP6         db 'SUB', '$'
+OP7         db 'MUL', '$'
+OP8         db 'DIV', '$'
 
 
 
@@ -45,7 +49,8 @@ OP4         db 'mul', '$'
 msgOpenFile db 0ah,0dh, 'Ingrese el nombre de archivo: ', 32, '$'
 
 
-msmError1 db 0ah,0dh,'Error al abrir archivo','$'
+;msmError1 db 0ah,0dh,'Error al abrir archivo','$'
+msmError1 db 0ah,0dh,'---',0ah,0dh,'$'
 msmError2 db 0ah,0dh,'Error al leer archivo','$'
 msmError3 db 0ah,0dh,'Error al crear archivo','$'
 msmError4 db 0ah,0dh,'Error al Escribir archivo','$'
@@ -83,6 +88,7 @@ CARGAR:
 
     limpiar buffread
     analizar textocorregido
+    ;print textocorregido
     jmp ENDGAME
 
 CONSOLA:

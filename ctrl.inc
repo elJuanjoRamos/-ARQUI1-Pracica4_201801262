@@ -112,10 +112,8 @@ INICIO:
     mov AL, buffer[SI]
     cmp AL, '{'
     JE GETID
-    cmp AL, '['
-    JE GETID
-    ;cmp AL, '#'
-    ;JE GETNUM
+    cmp AL, '#'
+    JE GETNUM
 
     CMP AL, '$'
     JE SALIR
@@ -135,13 +133,13 @@ GETNUM:
     INC SI
     PUSH DI
     xor DI, DI
-    ;obtenerNumero buffer, SI, DI
+    obtenerNumero buffer, SI, DI
 
     ;POP AX
 
     ;print AX
     
-    JMP SALIR
+    JMP INICIO
 
 
 SALIR:
@@ -150,7 +148,7 @@ SALIR:
 endm
 
 obtenerNumero macro buffer, indice, start
-LOCAL INICIO, FIN, SALIR
+LOCAL INICIO, FIN, SALIR, SUMA, RESTA, MULTI, DIVI
 MOV temporal[0], '$'
 MOV temporal[1], '$'
 MOV temporal[2], '$'
@@ -178,51 +176,79 @@ FIN:
     PUSH SI
     CovertirAscii temporal
     
+
     POP SI
     POP DI
+    ;JMP INICIO
+
 
     mov bx,ax	
     POP AX
 
-    ;print AX
-    ;cmp AX, '*'
-    ;JE SALIR 
     cmp AX, '+'
-    JE TEMP 
-    ;cmp AX, '*'
-    ;JE SALIR 
-    ;cmp AX, '/'
-    ;JE SALIR 
-    ;PUSH AX
-    ;POP CX
-    ;POP AX
-    ;cmp AX, '+'
-    ;JE SUMA 
+    JE SALIR 
+    cmp AX, '-'
+    JE SALIR 
+    cmp AX, '*'
+    JE SALIR 
+    cmp AX, '/'
+    JE SALIR 
+
+    
+    PUSH AX
+    POP CX
+    POP AX
+    cmp AX, '+'
+    JE SUMA 
+    cmp AX, '-'
+    JE RESTA
+    cmp AX, '*'
+    JE MULTI
+    cmp AX, '/'
+    JE DIVI
 
     ;JMP INICIO
 
 
-    JMP ENDF
+    ;JMP ENDF
 
-TEMP:
-    ;print msmError1
-    JMP ENDF
 SUMA:
-    add CX, bx
     PUSH CX
+    POP AX
+    add ax, bx
     JMP SALIR2
+RESTA:
+    PUSH CX
+    POP AX
+    SUB ax, bx
+    JMP SALIR2
+MULTI:
+    PUSH CX
+    POP AX
+    MUL bx
+    JMP SALIR2
+
+DIVI:
+    PUSH CX
+    POP AX
+
+    xor dx,dx
+	div bx
+    JMP SALIR2
+
+
 SALIR:
-    ;print msmError1
-    ;PUSH AX
-    ;push bx
+    PUSH AX
+    push bx
+    JMP ENDF
 SALIR2:
-    MOV temporal[0], Cl
-    MOV temporal[1], CH
-    ;ConvertirString temporal   
-    ;print temporal
-
-ENDF:
-
+    PUSH ax
+    PUSH SI
+    PUSH DI  
+    ConvertirString resultado   
+    print resultado
+    POP DI
+    POP SI
 endm
 
 
@@ -336,7 +362,6 @@ NOES:
     inc INICIO
     JMP OBTENER
 INSERTAR1:
-    ;print msmError1
     INC INICIO
     INC INICIO
     MOV AX, '+'
@@ -366,7 +391,6 @@ INSERTAR4:
 
 SALIR: 
     MOV resultados[posicion], ':'
-    ;print resultados
     mov SI, INICIO
     mov DI, posicion
     

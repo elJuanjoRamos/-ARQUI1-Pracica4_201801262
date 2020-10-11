@@ -89,3 +89,72 @@ CovertirAscii macro numero
 		jmp INICIO
 	FIN:
 endm
+
+
+
+saveopreciones macro bufferOperacion, bufferResultado, bufferOperaciones
+LOCAL INICIO, FIN, INSERTOPERATION,INSERTARRESULTADO1,INSERTARRESULTADO 
+MOV SI, 0
+MOV DI, 0
+INICIO:
+	CMP bufferOperaciones[SI], '$'
+	JE INSERTOPERATION
+	INC SI
+	JMP INICIO
+
+INSERTOPERATION:
+	CMP bufferOperacion[DI], '$'
+	JE INSERTARRESULTADO1
+	MOV AL, bufferOperacion[DI]
+	MOV bufferOperaciones[SI], AL
+	INC SI
+	INC DI
+	JMP INSERTOPERATION
+
+INSERTARRESULTADO1:
+	xor DI, DI
+	JMP INSERTARRESULTADO
+
+INSERTARRESULTADO:
+	CMP bufferResultado[DI], '$'
+	JE FIN
+
+	MOV AL, bufferResultado[DI]
+	MOV bufferOperaciones[SI], AL
+	INC SI
+	INC DI
+	JMP INSERTARRESULTADO
+
+FIN:
+MOV bufferOperaciones[SI], ','
+print msmError5
+print bufferOperaciones
+
+clear bufferOperacion
+clear bufferResultado
+endm
+
+
+savepadre macro bufferOperacion, bufferOperaciones
+LOCAL INICIO, FIN, INSERTOPERATION, FIN2
+MOV SI, 0
+MOV DI, 0
+INICIO:
+	CMP bufferOperaciones[SI], '$'
+	JE INSERTOPERATION
+	INC SI
+	JMP INICIO
+
+INSERTOPERATION:
+	CMP bufferOperacion[DI], '$'
+	JE FIN
+	MOV AL, bufferOperacion[DI]
+	MOV bufferOperaciones[SI], AL
+	INC SI
+	INC DI
+	JMP INSERTOPERATION
+
+FIN:
+	print bufferOperaciones
+	clear bufferOperacion
+endm

@@ -19,7 +19,7 @@ endm
 
 
 limpiar macro buffer
-LOCAL EX, SALIR, CORREGIR, CAD
+LOCAL EX, SALIR, CORREGIR, CAD, NUM, CAD1, CAD2
 
 getSize buffer
 EX:
@@ -74,7 +74,18 @@ EX:
     JMP EX
 CAD1:
     INC SI
+    CMP buffer[SI], '#'
+    JE NUM
+    MOV textocorregido[DI], '"'
+    INC DI
     JMP CAD
+
+NUM:
+    MOV textocorregido[DI], '#' 
+    inc SI
+    INC SI
+    inc DI
+    JMP EX
 CAD:
     MOV AL, buffer[SI]
     CMP AL, '"'
@@ -85,6 +96,8 @@ CAD:
     JMP CAD
 CAD2:
     INC SI
+    MOV textocorregido[DI], '"'
+    INC DI
     JMP EX
 CORREGIR:
     MOV AL, buffer[SI]
@@ -101,87 +114,147 @@ endm
 
 
 
-
-
-
-analizar macro buffer
-LOCAL GETID , INICIO,  GETNUM, SALIR
-    xor SI, SI
-    XOR DI, DI
+prueba1 macro buffer, indice
+LOCAL INICIO, SALIR, CADENA
 INICIO:
-    mov AL, buffer[SI]
-    cmp AL, '{'
-    JE GETID
-    cmp AL, '#'
-    JE GETNUM
-
-    CMP AL, '$'
+    MOV AL, buffer[indice]
+    CMP AL, '"'
+    JE CADENA
+    cmp AL, '['
     JE SALIR
-    INC SI
-    INC DI
+
+    inc indice
     JMP INICIO
-GETID:
-    getIdentificador buffer, SI, DI
-    INC SI
-    INC DI
+
+CADENA: 
+    INC indice
+    XOR DI, DI
+    getPadre buffer, indice, DI 
+    INC indice
+    JMP INICIO
+
+SALIR:
+    PUSH SI
+    PUSH DI
+    savepadre padre, operaciones
+    POP DI
+    POP SI
+    ;limpiar resultados
+    prueba buffer, indice
+endm
+
+
+
+
+
+prueba macro buffer, indice
+LOCAL INICIO, FIN,CADENA, GETNUM
+INICIO:
+    MOV AL, buffer[indice]
+
+    cmp AL, '$'
+    JE SALIR
+    CMP AL, '"'
+    JE CADENA
+    CMP AL, '#'
+    JE GETNUM
+    CMP AL, '}'
+    JE GETENDTEMP
+
+
+
+    inc indice
+    JMP INICIO
+
+
+CADENA:
+    INC indice
+    
+    XOR DI, DI
+    getIdentificador buffer, indice, DI
+    INC indice
     JMP INICIO
 
 
 
 
 GETNUM:
-    INC SI
-    PUSH DI
+    INC indice
     xor DI, DI
-    obtenerNumero buffer, SI, DI
-
-    ;POP AX
-
-    ;print AX
+    obtenerNumero buffer, indice, DI
     
+    JMP INICIO
+
+GETENDTEMP:
+    INC indice
+    CMP buffer[indice+1], '{'
+    JE GETENDTEMP2
+    CMP buffer[indice+1], ']'
+    JE GETENDTEMP2
+    JMP INICIO
+GETENDTEMP2:
+    INC indice
+    PUSH SI
+    PUSH DI
+    saveopreciones resultados, resultado, operaciones
+    
+    POP DI
+    POP SI
     JMP INICIO
 
 
 SALIR:
-
-
 endm
 
+
+
+
+
+
+
+
+
 obtenerNumero macro buffer, indice, start
-LOCAL INICIO, FIN, SALIR, SUMA, RESTA, MULTI, DIVI
-MOV temporal[0], '$'
-MOV temporal[1], '$'
-MOV temporal[2], '$'
-MOV temporal[3], '$'
-MOV temporal[4], '$'
-MOV temporal[5], '$'
+LOCAL INICIO, FIN, SALIR, SUMA, RESTA, MULTI, DIVI, SALIR2, INIT
+
+INIT:
+    MOV temporal[0], '$'
+    MOV temporal[1], '$'
+    MOV temporal[2], '$'
+    MOV temporal[3], '$'
+    MOV temporal[4], '$'
+    MOV temporal[5], '$'
+    JMP INICIO
+
+
 INICIO:
+
     MOV AL, buffer[indice]
     CMP AL, ','
-    JE FIN
+    JE FIN1
     CMP AL, '}'
-    JE FIN
+    JE FIN1
     CMP AL, ']'
-    JE FIN
+    JE FIN1
     CMP AL, '['
-    JE FIN
+    JE FIN1
     CMP AL, '{'
-    JE FIN
+    JE FIN1
     MOV temporal[start], AL
     INC indice
     INC start
     JMP INICIO
-FIN:
+FIN1:
+    
     mov SI, indice
     PUSH SI
     CovertirAscii temporal
-    
-
     POP SI
-    POP DI
-    ;JMP INICIO
-
-
+    PUSH AX
+    JMP FIN
+FIN:
+    POP AX
+    
     mov bx,ax	
     POP AX
 
@@ -210,13 +283,15 @@ FIN:
     ;JMP INICIO
 
 
-    ;JMP ENDF
+    JMP ENDF
+    
 
 SUMA:
     PUSH CX
     POP AX
     add ax, bx
     JMP SALIR2
+
 RESTA:
     PUSH CX
     POP AX
@@ -235,8 +310,6 @@ DIVI:
     xor dx,dx
 	div bx
     JMP SALIR2
-
-
 SALIR:
     PUSH AX
     push bx
@@ -244,11 +317,10 @@ SALIR:
 SALIR2:
     PUSH ax
     PUSH SI
-    PUSH DI  
-    ConvertirString resultado   
-    print resultado
-    POP DI
+    ConvertirString resultado
     POP SI
+    JMP FIN
+ENDF:
 endm
 
 
@@ -270,15 +342,12 @@ endm
 
 
 getIdentificador macro buffer, INICIO, posicion
-LOCAL SALIR, OBTENER, VERSUMA, VERRESTA,  VERMULTI, VERDIVI, INSERTAR1,INSERTAR2,INSERTAR3,INSERTAR4, GETMAS, GETMENOS, GETPOR, GETDIV
-    INC INICIO
+LOCAL SALIR, OBTENER, VERSUMA, VERRESTA,  VERMULTI, VERDIVI, INSERTAR1,INSERTAR2,INSERTAR3,INSERTAR4, GETMAS, GETMENOS, GETPOR, GETDIV, NOES, SALIR2
 OBTENER:
 
     mov AL, buffer[INICIO]
     
-    CMP AL, '{'
-    JE SALIR
-    CMP AL, '['
+    CMP AL, '"'
     JE SALIR
     CMP AL, 'a'
     JE VERSUMA
@@ -298,7 +367,7 @@ OBTENER:
     JE GETDIV
 
     MOV resultados[posicion], AL
-    INC INICIO
+    INC SI
     INC posicion
     JMP OBTENER
 
@@ -307,22 +376,22 @@ GETMAS:
     insertarSimbolo '+'
     INC INICIO
     INC posicion
-    JMP OBTENER
+    JMP SALIR2
 GETMENOS:
     insertarSimbolo '-'
     INC INICIO
     INC posicion
-    JMP OBTENER
+    JMP SALIR2
 GETPOR:
     insertarSimbolo '*'
     INC INICIO
     INC posicion
-    JMP OBTENER
+    JMP SALIR2
 GETDIV:
     insertarSimbolo '/'
     INC INICIO
     INC posicion
-    JMP OBTENER
+    JMP SALIR2
 
 
 
@@ -354,7 +423,6 @@ VERDIVI:
     JNE NOES
     JMP INSERTAR4
 
-
 NOES:
     mov AL, buffer[INICIO]
     MOV resultados[posicion], AL
@@ -364,36 +432,91 @@ NOES:
 INSERTAR1:
     INC INICIO
     INC INICIO
+    INC INICIO
     MOV AX, '+'
     PUSH AX
-    JMP OBTENER
+    JMP SALIR2
 INSERTAR2:
+    INC INICIO
     INC INICIO
     INC INICIO
     MOV AX, '-'
     PUSH AX
-    JMP OBTENER
+    JMP SALIR2
 
 INSERTAR3:
     INC INICIO
     INC INICIO
+    INC INICIO
+    XOR AX, AX
     MOV AX, '*'
     PUSH AX
-    JMP OBTENER
+    JMP SALIR2
 
 INSERTAR4:
     INC INICIO
     INC INICIO
+    INC INICIO
     MOV AX, '/'
     PUSH AX
-    JMP OBTENER
+    JMP SALIR2
 
 
-SALIR: 
+SALIR:
+    
     MOV resultados[posicion], ':'
     mov SI, INICIO
     mov DI, posicion
-    
+
+SALIR2:
 
 endm
+
+
+
+
+
+
+getPadre macro buffer, INICIO, posicion
+LOCAL SALIR, OBTENER, SALIR2
+OBTENER:
+    mov AL, buffer[INICIO]
+    CMP AL, '"'
+    JE SALIR
+    MOV padre[posicion], AL
+    INC SI
+    INC posicion
+    JMP OBTENER
+SALIR:
+    MOV padre[posicion], '['
+    mov SI, INICIO
+    mov DI, posicion
+
+SALIR2:
+
+endm
+
+
+
+
+
+clear macro buffer
+LOCAL INICIO, SALIR
+    PUSH DI 
+    xor DI,DI
+INICIO:
+    CMP DI,300
+    JE SALIR
+    CMP buffer[DI], '$'
+    JE SALIR
+    
+    MOV buffer[DI], '$'
+    INC DI
+    JMP INICIO
+SALIR:
+    XOR DI, DI
+    POP DI
+endm
+
+
 

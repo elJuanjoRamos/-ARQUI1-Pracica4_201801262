@@ -63,6 +63,7 @@ CovertirAscii macro numero
 		add ax,cx	;sumar lo que tengo mas el siguiente
 		jmp INICIO
 	FIN:
+
 endm
 
 getChar macro
@@ -106,13 +107,13 @@ resultado db 100 dup('$')
 			CovertirAscii buffer2
 			pop bx
 
-			add ax,bx
+			;add ax,bx
 			;adc ax,bx
 			
 			;sub ax,bx
 			;sbb ax,bx
 
-			;mul bx
+			mul bx
 			;xor dx,dx
 			;div bx
 

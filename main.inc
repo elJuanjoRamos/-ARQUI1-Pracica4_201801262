@@ -22,17 +22,21 @@ final       db 10,13,'Gracias por usar la calculadora, vuelva pronto :) ',10,13,
 
 ;=========== ARCHIVO
 encabfile   db 10,13,'============= CARGAR ARCHIVO ===============', 10,13,'$'  
+encabcons   db 10,13,'============= CONSOLA ===============', 10,13,'$'  
 
 filepath    db 100 dup('$') ; ruta archivo
 buffread    db 5000 dup('$') ; buffer lectura
 buffwrite   db 200 dup('$') ; buffer escritura
 handlefile  dw ?
+comando    db 100 dup('$') ; comando
+
 
 textocorregido  db 5000 dup('$') ; 
-operaciones     dw ? ; 
+operaciones     db 1000 dup('$'),'$' ; 
 resultados      db 1000 dup('$'),'$' ; 
 temporal        db 6 dup('$'),'$' ; 
-
+resultado       db 100 dup('$')
+padre           db 100 dup('$')
 
 OP1         db 'add', '$'
 OP2         db 'sub', '$'
@@ -55,7 +59,9 @@ msmError2 db 0ah,0dh,'Error al leer archivo','$'
 msmError3 db 0ah,0dh,'Error al crear archivo','$'
 msmError4 db 0ah,0dh,'Error al Escribir archivo','$'
 
+msmError5 db 0ah,0dh,'  ',0ah,0dh,'$'
 
+msmError6 db 0ah,0dh,'ERROR ERROR',0ah,0dh,'$'
 
 
 
@@ -87,19 +93,29 @@ CARGAR:
     readFile SIZEOF buffread,buffread,handlefile
 
     limpiar buffread
-    analizar textocorregido
-    ;print textocorregido
+    ;clear   operaciones
+    ;clear   resultado
+    ;clear   resultados    
+    print textocorregido
+    print msmError5
+    print msmError5
+    
+    xor SI, SI
+    prueba1 textocorregido, SI
     jmp ENDGAME
 
 CONSOLA:
+    print encabcons
+    printChar '>'
+    printChar '>'
+    getRuta comando
 
 
 
 
 
 
-
-
+    jmp ENDGAME
 
 
 

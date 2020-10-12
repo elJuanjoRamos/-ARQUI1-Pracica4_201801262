@@ -174,10 +174,6 @@ CADENA:
     getIdentificador buffer, indice, DI
     INC indice
     JMP INICIO
-
-
-
-
 GETNUM:
     INC indice
     xor DI, DI
@@ -248,7 +244,8 @@ FIN1:
     
     mov SI, indice
     PUSH SI
-    CovertirAscii temporal
+    ;CONVIERTO A NUMERO EL NUMERO-CADENA
+    evaluarNumero temporal
     POP SI
     PUSH AX
     JMP FIN
@@ -257,7 +254,7 @@ FIN:
     
     mov bx,ax	
     POP AX
-
+    ; VERIFICO QUE SI LO QUE SACO ES SIMBOLO
     cmp AX, '+'
     JE SALIR 
     cmp AX, '-'
@@ -266,11 +263,19 @@ FIN:
     JE SALIR 
     cmp AX, '/'
     JE SALIR 
+    ;SI LO QUE HAY ES SIGNO, ME SALGO Y PUSHEO
+    ; SI LO QUE HAY ES NYMERO, CONTINUA
 
-    
+    ;SIGNIFICA QUE SAQUE UN NUMERO
+    ;EN LA PILA ESTABA:
+    ;2
+    ;3
+    ;+
+
     PUSH AX
     POP CX
     POP AX
+    ;SACO EL SIMBOLO Y MIRO QUE SIGNO ES DE AMBOS NUMEROS
     cmp AX, '+'
     JE SUMA 
     cmp AX, '-'
@@ -279,8 +284,6 @@ FIN:
     JE MULTI
     cmp AX, '/'
     JE DIVI
-
-    ;JMP INICIO
 
 
     JMP ENDF
@@ -308,21 +311,54 @@ DIVI:
     POP AX
 
     xor dx,dx
-	div bx
+	CWD
+    idiv bx
     JMP SALIR2
 SALIR:
+    
     PUSH AX
     push bx
     JMP ENDF
 SALIR2:
     PUSH ax
     PUSH SI
+
     ConvertirString resultado
     POP SI
     JMP FIN
 ENDF:
 endm
 
+
+
+
+
+evaluarNumero macro buffer
+LOCAL NEGAR, SALIR, NEGAR2, NEGAR3
+
+    CMP buffer[0], '-'
+    JE NEGAR
+    CovertirAscii buffer
+    JMP SALIR
+NEGAR:
+    MOV DI, 1
+    JMP NEGAR2
+NEGAR2:
+    MOV AL, buffer[DI] 
+    CMP AL, '$'
+    JE NEGAR3
+    mov temporal2[DI-1], AL
+    INC DI
+    JMP NEGAR2
+NEGAR3:
+    CovertirAscii temporal2
+    not AX
+    ADD AX, 1
+    JMP SALIR
+SALIR:
+    clear temporal2
+
+endm
 
 
 
@@ -342,21 +378,28 @@ endm
 
 
 getIdentificador macro buffer, INICIO, posicion
-LOCAL SALIR, OBTENER, VERSUMA, VERRESTA,  VERMULTI, VERDIVI, INSERTAR1,INSERTAR2,INSERTAR3,INSERTAR4, GETMAS, GETMENOS, GETPOR, GETDIV, NOES, SALIR2
+LOCAL SALIR, OBTENER, VERSUMA, VERSUMA2, VERRESTA, VERRESTA2,  VERMULTI, VERMULTI2, VERDIVI, VERDIVI2, INSERTAR1,INSERTAR2,INSERTAR3,INSERTAR4, GETMAS, GETMENOS, GETPOR, GETDIV, NOES, SALIR2
 OBTENER:
 
-    mov AL, buffer[INICIO]
-    
+    mov AL, buffer[INICIO] 
     CMP AL, '"'
     JE SALIR
     CMP AL, 'a'
     JE VERSUMA
+    CMP AL, 'A'
+    JE VERSUMA2
     CMP AL, 's'
     JE VERRESTA
+    CMP AL, 'S'
+    JE VERRESTA2
     CMP AL, 'm'
     JE VERMULTI
+    CMP AL, 'M'
+    JE VERMULTI2
     CMP AL, 'd'
     JE VERDIVI
+    CMP AL, 'D'
+    JE VERDIVI2
     cmp AL, '+'
     JE GETMAS
     cmp AL, '-'
@@ -402,10 +445,23 @@ VERSUMA:
     JNE NOES
     JMP INSERTAR1
 
+VERSUMA2:
+    CMP buffer[INICIO +1], 'D'    
+    JNE NOES
+    CMP buffer[INICIO + 2], 'D'
+    JNE NOES
+    JMP INSERTAR1
+
 VERRESTA:
     CMP buffer[INICIO +1], 'u'    
     JNE NOES
     CMP buffer[INICIO + 2], 'b'
+    JNE NOES
+    JMP INSERTAR2
+VERRESTA2:
+    CMP buffer[INICIO +1], 'U'    
+    JNE NOES
+    CMP buffer[INICIO + 2], 'B'
     JNE NOES
     JMP INSERTAR2
 
@@ -416,10 +472,23 @@ VERMULTI:
     JNE NOES
     JMP INSERTAR3
 
+VERMULTI2:
+    CMP buffer[INICIO +1], 'U'    
+    JNE NOES
+    CMP buffer[INICIO + 2], 'L'
+    JNE NOES
+    JMP INSERTAR3
+
 VERDIVI:
     CMP buffer[INICIO +1], 'i'    
     JNE NOES
     CMP buffer[INICIO + 2], 'v'
+    JNE NOES
+    JMP INSERTAR4
+VERDIVI2:
+    CMP buffer[INICIO +1], 'I'    
+    JNE NOES
+    CMP buffer[INICIO + 2], 'V'
     JNE NOES
     JMP INSERTAR4
 

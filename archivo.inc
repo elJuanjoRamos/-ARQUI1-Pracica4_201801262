@@ -14,6 +14,21 @@ FIN:
 endm
 
 
+getRuta2 macro buffer
+LOCAL INICIO,FIN
+	xor si,si
+INICIO:
+	getChar
+	cmp al,0dh
+	je FIN
+	mov buffer[si],al
+	inc si
+	jmp INICIO
+FIN:
+	mov buffer[si],'$'
+endm
+
+
 openFile macro ruta,handle
 mov ah,3dh
 mov al,10b

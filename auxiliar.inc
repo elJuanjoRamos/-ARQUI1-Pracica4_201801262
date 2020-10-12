@@ -45,7 +45,33 @@ ConvertirString macro buffer
 endm
 
 CovertirAscii macro numero
-	LOCAL INICIO,FIN
+	LOCAL INICIO,FIN, NUEVO, FIN2
+INICIO:
+  cmp numero[0], '-'
+  JMP NUEVO
+  JNE FIN
+NUEVO:
+  MOV AL, numero[1]
+  MOV buffer3[0], AL
+  MOV AL, numero[2]
+  MOV buffer3[1], AL
+  MOV AL, numero[3]
+  MOV buffer3[2], AL
+  MOV AL, numero[4]
+  MOV buffer3[3], AL
+  convertir buffer3
+  not ax
+  add ax, 1
+  JMP FIN2
+
+FIN:
+  convertir numero
+FIN2:
+
+endm
+
+convertir MACRO numero
+LOCAL INICIO, FIN
 	xor ax,ax
 	xor bx,bx
 	xor cx,cx
@@ -63,8 +89,8 @@ CovertirAscii macro numero
 		add ax,cx	;sumar lo que tengo mas el siguiente
 		jmp INICIO
 	FIN:
-
 endm
+
 
 getChar macro
 	mov ah,01h
@@ -90,6 +116,7 @@ endm
 .data
 holamundo db 0ah,0dh,'Hola mundo','$'
 buffer db 100 dup('$')
+buffer3 db 100 dup('$')
 buffer2 db 100 dup('$')
 resultado db 100 dup('$')
 .code
@@ -113,9 +140,10 @@ resultado db 100 dup('$')
 			;sub ax,bx
 			;sbb ax,bx
 
-			mul bx
+			;mul bx
 			;xor dx,dx
-			;div bx
+			CWD 
+      idiv bx
 
 			ConvertirString resultado
 			print resultado
